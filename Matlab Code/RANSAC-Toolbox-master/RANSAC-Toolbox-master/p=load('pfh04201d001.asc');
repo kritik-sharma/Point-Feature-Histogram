@@ -1,0 +1,57 @@
+p=load('pfh04201d001.asc');
+q=load('pfh04201d001.asc');
+%p_sidx=load('ftr_pts04201d001.asc');
+%q_sidx=load('ftr_pts04201d002.asc');
+[mp,np]=size(p);
+[mq,nq]=size(q);
+if mp<nq
+	temp=p;
+	p=q;
+	q=temp;
+	temp=mq;
+	mq=mp;
+	mp=temp;
+end
+score(mq,2)=0;
+Idx(mp)=0;
+for i=1:mp
+	for j=1:mq
+		numer=0;
+		denom=0;
+		for k=1:125
+			numer=numer+min(p(i,k),q(j,k));
+			denom=denom+p(i,k);
+		end
+		score(j,1)=1-numer/denom;
+		score(j,2)=j;
+	end
+	[Mini1,Id1]=min(score(:,1));
+	Id1=score(Id1,2);
+	score(Id1,:)=[];
+	[Mini2,Id1]=min(score(:,1));
+	if Mini1/Mini2<=0.9
+		Idx(i)=Id1;
+	end
+end
+num=0;
+for i=1:mp
+	if Idx(i)~=0
+		num=num+1;
+	end
+end
+p=load('04201d001.asc');
+q=load('04201d001.asc');
+plot3(p(:,1),p(:,2),p(:,3),'LineStyle','none','Marker','.');
+hold on
+plot3(q(:,1),q(:,2),q(:,3),'LineStyle','none','Marker','.');
+for i=1:mp
+if Idx(i)~=0
+plot3([p(i,1); q(Idx(i),1)], [p(i,2); q(Idx(i),2)], [p(i,3); q(Idx(i),3)]);
+end
+end
+
+
+
+
+
+

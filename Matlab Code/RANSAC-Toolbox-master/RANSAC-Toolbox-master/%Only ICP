@@ -1,0 +1,227 @@
+%Only ICP
+p=load('04201d001.asc');
+q=load('04201d002.asc');
+[TR,TT,p_idx,q_idx]=icp(q',p');
+[m,n]=size(p);
+p(:,2)=p(:,2)+60;
+plot3(p(:,1),p(:,2),p(:,3),'LineStyle','none','Marker','.');
+hold on
+plot3(q(:,1),q(:,2),q(:,3),'LineStyle','none','Marker','.');
+for i=1:m
+qidx=q_idx(i);
+plot3([p(i,1); q(qidx,1)], [p(i,2); q(qidx,2)], [p(i,3); q(qidx,3)]);
+i+60;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Only PFH
+p=load('pfh04201d001.asc');
+q=load('pfh04201d002.asc');
+[TR,TT,p_idx,q_idx]=corres_pfh(q',p');
+[m,n]=size(p);
+p=load('04201d001.asc');
+q=load('04201d002.asc');
+p(:,2)=p(:,2)+60;
+plot3(p(:,1),p(:,2),p(:,3),'LineStyle','none','Marker','.');
+hold on
+plot3(q(:,1),q(:,2),q(:,3),'LineStyle','none','Marker','.');
+for i=1:m
+qidx=q_idx(i);
+plot3([p(i,1); q(qidx,1)], [p(i,2); q(qidx,2)], [p(i,3); q(qidx,3)]);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Intersection of ICP & PFH matches
+
+p=load('04201d001.asc');
+q=load('04201d002.asc');
+p_pfh=load('pfh04201d001.asc');
+q_pfh=load('pfh04201d002.asc');
+[TR,TT,p_idx,q_idx]=icp(q',p');
+[TR,TT,p_pfh_idx,q_pfh_idx]=corres_pfh(q_pfh',p_pfh');
+[m,n]=size(p);
+for i=1:m
+	if q_idx(i)~=q_pfh_idx(i)
+		p_idx(i)=0;
+	end
+end
+p(:,2)=p(:,2)+60;
+plot3(p(:,1),p(:,2),p(:,3),'LineStyle','none','Marker','.');
+hold on
+plot3(q(:,1),q(:,2),q(:,3),'LineStyle','none','Marker','.');
+for i=1:m
+qidx=q_idx(i);
+if p_idx(i)==1
+plot3([p(i,1); q(qidx,1)], [p(i,2); q(qidx,2)], [p(i,3); q(qidx,3)]);
+end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Intersection of ICP & PFH matches
+
+p=load('04201d001.asc');
+q=load('04201d002.asc');
+p_pfh=load('pfh04201d001.asc');
+q_pfh=load('pfh04201d002.asc');
+[TR,TT,p_idx,q_idx]=icp(q',p');
+[m,n]=size(p);
+for i=1:m
+	for j=i+1:m
+		if q_idx(i)==q_idx(j)
+			d1=dist_pfh(p_pfh(i,:)',q_pfh(q_idx(i),:)');
+			d2=dist_pfh(p_pfh(i,:)',q_pfh(q_idx(j),:)');
+			if d1<d2
+				p_idx(j)=0;
+			else
+				p_idx(i)=0;
+			end
+		end
+	end
+end
+p(:,2)=p(:,2)+60;
+plot3(p(:,1),p(:,2),p(:,3),'LineStyle','none','Marker','.');
+hold on
+plot3(q(:,1),q(:,2),q(:,3),'LineStyle','none','Marker','.');
+for i=1:m
+qidx=q_idx(i);
+if p_idx(i)==1
+plot3([p(i,1); q(qidx,1)], [p(i,2); q(qidx,2)], [p(i,3); q(qidx,3)]);
+end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Only icp + RANSAC
+
+p=load('04201d001.asc');
+q=load('04225d001.asc');
+[TR,TT,p_idx,q_idx]=icp(q',p');
+q=q(q_idx(:),[1:3]);
+X1=p';
+X2=q';
+[s1,s2]=size(p);
+N = s1;
+% inilers percentage
+p = 0.25;
+% noise
+sigma = 1;
+
+% set RANSAC options
+options.epsilon = 1e-6;
+options.P_inlier = 1-1e-4;
+options.sigma = sigma;
+options.est_fun = @estimate_affine;
+options.man_fun = @error_affine;
+options.mode = 'MSAC';
+options.Ps = [];
+options.notify_iters = [];
+options.min_iters = 1000;
+options.fix_seed = false;
+options.reestimate = true;
+options.stabilize = false;
+X = [X1; X2];
+% run RANSAC
+[results, options] = RANSAC(X, options);
+ index=results.CS;
+plot3(X1(1,:),X1(2,:),X1(3,:),'LineStyle','none','Marker','.');
+hold on
+plot3(X2(1,:),X2(2,:),X2(3,:),'LineStyle','none','Marker','.');
+for i=1:s1
+if index(i)==1
+plot3([X1(1,i); X2(1,i)], [X1(2,i); X2(2,i)], [X1(3,i); X2(3,i)]);
+end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Only RANSAC + PFH
+
+p=load('04201d001.asc');
+q=load('04217d001.asc');
+X1=p';
+X2=q';
+[s1,s2]=size(p);
+N = s1;
+% inilers percentage
+p = 0.25;
+% noise
+sigma = 1;
+
+% set RANSAC options
+options.epsilon = 1e-6;
+options.P_inlier = 1-1e-4;
+options.sigma = sigma;
+options.est_fun = @estimate_affine;
+options.man_fun = @error_affine;
+options.mode = 'MSAC';
+options.Ps = [];
+options.notify_iters = [];
+options.min_iters = 1000;
+options.fix_seed = false;
+options.reestimate = true;
+options.stabilize = false;
+p=load('pfh04201d001.asc');
+q=load('pfh04217d001.asc');
+%p_sidx=load('ftr_pts04201d001.asc');
+%q_sidx=load('ftr_pts04201d002.asc');
+[mp,np]=size(p);
+[mq,nq]=size(q);
+if mp<nq
+	temp=p;
+	p=q;
+	q=temp;
+	temp=mq;
+	mq=mp;
+	mp=temp;
+end
+score(mq,2)=0;
+Idx(mp)=0;
+for i=1:mp
+	for j=1:mq
+		numer=0;
+		denom=0;
+		for k=1:125
+			numer=numer+min(p(i,k),q(j,k));
+			denom=denom+p(i,k);
+		end
+		score(j,1)=1-numer/denom;
+		score(j,2)=j;
+	end
+	[Mini1,Id1]=min(score(:,1));
+	Id1=score(Id1,2);
+	score(Id1,:)=[];
+	[Mini2,Id1]=min(score(:,1));
+	if Mini1/Mini2<=0.9
+		Idx(i)=Id1;
+	end
+end
+[mi,ni]=size(Idx);
+pos=1;
+for i=1:mi
+	if Idx(i)~=0
+		X(:,pos)=[X1(:,i);X2(:,Idx(i))];
+		X_idx(pos,1)=i;
+		X_idx(pos,2)=Idx(i);
+		pos=pos+1;
+	end
+end
+% run RANSAC
+[results, options] = RANSAC(X, options);
+Idx1=results.CS;
+[s1,s2]=size(Idx1);
+plot3(X1(1,:),X1(2,:),X1(3,:),'LineStyle','none','Marker','.');
+hold on
+plot3(X2(1,:),X2(2,:),X2(3,:),'LineStyle','none','Marker','.');
+for i=1:s2
+if Idx(i)==1
+plot3([X1(1,X_idx((i),1)); X2(1,X_idx((i),2))], [X1(2,X_idx((i),1)); X2(2,X_idx((i),2))], [X1(3,X_idx((i),1)); X2(3,X_idx((i),2))]);
+end
+end

@@ -1,0 +1,5 @@
+plot3(X(:,1),X(:,2),X(:,3),'LineStyle','none','Marker','.');
+hold on
+for i=1:1973
+plot3(X(idx(i),1),X(idx(i),2),X(idx(i),3),'LineStyle','none','Marker','o','Color','red');
+end
